@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Line Explorer 🌈</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #e0f7ff;
+    --sun: #FFD93D;
+    --grass: #6BCB77;
+    --cloud: #ffffff;
+    --ink: #1a1a2e;
+    --coral: #FF6B6B;
+    --violet: #845EC2;
+    --teal: #00C9A7;
+    --orange: #FF9671;
+    --pink: #FF6F91;
+    --tick-h: 44px;
+    --label-size: 1.1rem;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Sky background with clouds */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 200px 80px at 15% 20%, white 60%, transparent 100%),
+      radial-gradient(ellipse 150px 60px at 13% 22%, white 60%, transparent 100%),
+      radial-gradient(ellipse 180px 70px at 70% 12%, white 60%, transparent 100%),
+      radial-gradient(ellipse 130px 55px at 68% 14%, white 60%, transparent 100%),
+      radial-gradient(ellipse 120px 50px at 88% 25%, white 60%, transparent 100%),
+      linear-gradient(180deg, #b8e8ff 0%, #e0f7ff 60%, #c8f5c8 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grass bottom */
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: linear-gradient(180deg, #6BCB77 0%, #4aab5a 100%);
+    border-radius: 60% 60% 0 0 / 30px 30px 0 0;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px 100px;
+  }
+
+  .full-width-section {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 3rem);
+    color: var(--violet);
+    text-align: center;
+    text-shadow: 3px 3px 0 rgba(132,94,194,0.18);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    animation: bounce-in 0.7s cubic-bezier(.36,1.56,.64,1) both;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #555;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    animation: fade-up 0.6s 0.2s both;
+  }
+
+  /* Controls panel */
+  .controls {
+    background: white;
+    border-radius: 24px;
+    padding: 22px 26px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px 24px;
+    animation: fade-up 0.5s 0.3s both;
+  }
+
+  .control-group label {
+    display: block;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--violet);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .control-group input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2.5px solid #e0e0e0;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fafafa;
+  }
+
+  .control-group input[type="number"]:focus {
+    border-color: var(--violet);
+    background: white;
+  }
+
+  .control-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--coral);
+    cursor: pointer;
+  }
+
+  .range-val {
+    display: inline-block;
+    background: var(--coral);
+    color: white;
+    font-weight: 800;
+    font-size: 0.9rem;
+    border-radius: 50px;
+    padding: 2px 12px;
+    margin-left: 8px;
+  }
+
+  /* Feature toggles */
+  .toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+    animation: fade-up 0.5s 0.4s both;
+  }
+
+  .toggle-btn {
+    background: white;
+    border: 2.5px solid #ddd;
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .toggle-btn.active {
+    border-color: var(--violet);
+    background: var(--violet);
+    color: white;
+    box-shadow: 0 3px 10px rgba(132,94,194,0.3);
+  }
+
+  .toggle-btn:hover:not(.active) {
+    border-color: var(--violet);
+    color: var(--violet);
+  }
+
+  /* Number line canvas area */
+  .nl-card {
+    background: white;
+    border-radius: 28px;
+    padding: 30px 18px 36px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+    overflow: visible;
+    animation: fade-up 0.5s 0.5s both;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .nl-wrap {
+    position: relative;
+    padding: 110px 40px 60px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* The main line */
+  .nl-line {
+    position: relative;
+    height: var(--tick-h);
+    display: flex;
+    align-items: center;
+  }
+
+  .nl-axis {
+    position: absolute;
+    left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--coral), var(--violet));
+    border-radius: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Arrowheads */
+  .nl-axis::before,
+  .nl-axis::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 10px solid transparent;
+  }
+  .nl-axis::before {
+    left: -14px;
+    border-right-color: var(--coral);
+    border-left: none;
+  }
+  .nl-axis::after {
+    right: -14px;
+    border-left-color: var(--violet);
+    border-right: none;
+  }
+
+  /* Ticks container */
+  .nl-ticks {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .tick {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+
+  .tick:hover { transform: translateX(-50%) scale(1.15); }
+
+  .tick-mark {
+    width: 3px;
+    background: var(--ink);
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+
+  .tick.major .tick-mark {
+    height: 34px;
+    margin-top: -17px;
+    background: var(--ink);
+    width: 4px;
+  }
+
+  .tick.minor .tick-mark {
+    height: 18px;
+    margin-top: -9px;
+    background: #aaa;
+    width: 2px;
+  }
+
+  .tick.highlighted .tick-mark {
+    background: var(--coral) !important;
+    width: 5px !important;
+    height: 40px !important;
+    margin-top: -20px !important;
+    box-shadow: 0 0 10px rgba(255,107,107,0.5);
+  }
+
+  .tick-label {
+    position: absolute;
+    top: calc(50% + 22px);
+    font-family: 'Fredoka One', cursive;
+    font-size: var(--label-size);
+    color: var(--ink);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .tick.minor .tick-label {
+    font-size: 0.75rem;
+    color: #888;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+  }
+
+  .tick.highlighted .tick-label {
+    color: var(--coral);
+    font-size: 1.25rem;
+  }
+
+  /* Hop frog */
+  .frog {
+    position: absolute;
+    top: calc(50% - 38px);
+    font-size: 1.8rem;
+    transform: translateX(-50%);
+    transition: left 0.45s cubic-bezier(.36,1.56,.64,1);
+    pointer-events: none;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.15));
+    z-index: 10;
+    animation: frog-bob 1.8s ease-in-out infinite;
+  }
+
+  @keyframes frog-bob {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+  }
+
+  /* Jump arc path */
+  .jump-svg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* Hop panel */
+  .hop-panel {
+    background: white;
+    border-radius: 24px;
+    padding: 20px 26px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    margin-top: 24px;
+    animation: fade-up 0.5s 0.6s both;
+  }
+
+  .hop-panel h2 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--teal);
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+  }
+
+  .hop-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hop-controls input[type="number"] {
+    width: 90px;
+    padding: 10px 14px;
+    border: 2.5px solid #e0e0e0;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+  }
+  .hop-controls input[type="number"]:focus { border-color: var(--teal); }
+
+  .hop-btn {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 22px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(0,201,167,0.3);
+  }
+  .hop-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,201,167,0.4); }
+  .hop-btn:active { transform: translateY(0); }
+  .hop-btn.reset { background: #eee; color: #666; box-shadow: none; }
+  .hop-btn.reset:hover { background: #e0e0e0; }
+
+  .hop-trail {
+    margin-top: 14px;
+    min-height: 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #555;
+  }
+
+  .hop-trail span {
+    display: inline-block;
+    background: var(--teal);
+    color: white;
+    border-radius: 50px;
+    padding: 3px 13px;
+    margin: 3px 4px;
+    font-size: 0.95rem;
+    animation: pop-in 0.25s cubic-bezier(.36,1.56,.64,1) both;
+  }
+
+  /* Quiz section */
+  .quiz-panel {
+    background: white;
+    border-radius: 24px;
+    padding: 20px 26px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    margin-top: 24px;
+    animation: fade-up 0.5s 0.7s both;
+  }
+
+  .quiz-panel h2 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--orange);
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+  }
+
+  .quiz-q {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+    min-height: 1.6em;
+  }
+
+  .quiz-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .quiz-input-row input[type="number"] {
+    width: 100px;
+    padding: 10px 14px;
+    border: 2.5px solid #e0e0e0;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .quiz-input-row input[type="number"]:focus { border-color: var(--orange); }
+
+  .check-btn {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 22px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(255,150,113,0.3);
+  }
+  .check-btn:hover { transform: translateY(-2px); }
+
+  .quiz-result {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    min-height: 1.6em;
+    transition: all 0.2s;
+  }
+  .quiz-result.correct { color: var(--grass); }
+  .quiz-result.wrong { color: var(--coral); }
+
+  .next-btn {
+    margin-top: 10px;
+    background: var(--violet);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 9px 20px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: none;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(132,94,194,0.3);
+  }
+  .next-btn.show { display: inline-block; }
+  .next-btn:hover { transform: translateY(-2px); }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f5f5f5;
+    border-radius: 50px;
+    padding: 5px 14px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--violet);
+    margin-left: 14px;
+    vertical-align: middle;
+  }
+
+  /* Animations */
+  @keyframes bounce-in {
+    from { opacity: 0; transform: translateY(-30px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Print */
+  @media print {
+    body::before, body::after { display: none; }
+    .hop-panel, .quiz-panel, .toggles, .controls { display: none; }
+    .nl-card { box-shadow: none; border: 2px solid #ddd; }
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    :root { --label-size: 0.85rem; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🌈 Number Line Explorer</h1>
+  <p class="subtitle">Click on numbers • Make frogs hop • Take a quiz!</p>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <label>Start</label>
+      <input type="number" id="startNum" value="0" min="-100" max="99">
+    </div>
+    <div class="control-group">
+      <label>End</label>
+      <input type="number" id="endNum" value="20" min="-99" max="200">
+    </div>
+    <div class="control-group">
+      <label>Count by <span class="range-val" id="stepVal">1</span></label>
+      <input type="range" id="stepSize" min="1" max="25" value="1">
+    </div>
+  </div>
+
+  <!-- Feature toggles -->
+  <div class="toggles">
+    <button class="toggle-btn active" id="toggleLabels">🔢 Show Numbers</button>
+    <button class="toggle-btn active" id="toggleMinor">➕ Show Minor Ticks</button>
+    <button class="toggle-btn" id="toggleEven">🟢 Highlight Evens</button>
+    <button class="toggle-btn" id="toggleOdd">🔴 Highlight Odds</button>
+    <button class="toggle-btn" id="toggleFrog">🐸 Hopping Frog</button>
+    <button class="toggle-btn" id="togglePrint">🖨️ Print</button>
+  </div>
+
+  <!-- Number Line (full width) -->
+  </div><!-- close .app -->
+  <div class="full-width-section">
+  <div class="nl-card">
+    <div class="nl-wrap" id="nlWrap">
+      <!-- Arc SVG sits here, sized to the wrap -->
+      <svg class="arc-svg" id="arcSvg" style="position:absolute;top:0;left:0;width:100%;pointer-events:none;overflow:visible;" height="120"></svg>
+      <div class="nl-line" id="nlLine">
+        <div class="nl-axis"></div>
+        <div class="nl-ticks" id="nlTicks"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="app" style="padding-top:0;padding-bottom:0;"><!-- reopen .app -->
+
+  <!-- Hop Panel -->
+  <div class="hop-panel" id="hopPanel" style="display:none">
+    <h2>🐸 Frog Hops</h2>
+    <div class="hop-controls">
+      <span style="font-weight:800;color:#555;">Start at</span>
+      <input type="number" id="hopStart" value="0" style="width:80px">
+      <span style="font-weight:800;color:#555;">hop by</span>
+      <input type="number" id="hopSize" value="2" min="1" style="width:80px">
+      <button class="hop-btn" onclick="doHop()">Hop! 🐸</button>
+      <button class="hop-btn reset" onclick="resetHop()">Reset</button>
+    </div>
+    <div class="hop-trail" id="hopTrail"></div>
+  </div>
+
+  <!-- Quiz Panel -->
+  <div class="quiz-panel">
+    <h2>🧠 Quick Quiz <span class="score-badge" id="scoreBadge">⭐ 0 / 0</span></h2>
+    <div class="quiz-q" id="quizQ">Loading question…</div>
+    <div class="quiz-input-row">
+      <input type="number" id="quizInput" placeholder="?">
+      <button class="check-btn" onclick="checkAnswer()">Check ✔</button>
+    </div>
+    <div class="quiz-result" id="quizResult"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question ➡️</button>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = {
+  start: 0, end: 20, step: 1,
+  showLabels: true, showMinor: true,
+  highlightEven: false, highlightOdd: false,
+  showFrog: false,
+  highlighted: new Set(),
+  frogPos: 0,
+  hopTrail: [],
+};
+
+let quiz = { q: null, answer: null, score: 0, total: 0 };
+
+// ─── Inputs ───────────────────────────────────────────────────────────────────
+const startInput = document.getElementById('startNum');
+const endInput   = document.getElementById('endNum');
+const stepInput  = document.getElementById('stepSize');
+const stepVal    = document.getElementById('stepVal');
+
+function syncInputs() {
+  state.start = parseInt(startInput.value) || 0;
+  state.end   = parseInt(endInput.value) || 20;
+  state.step  = parseInt(stepInput.value) || 1;
+  if (state.start >= state.end) { state.end = state.start + 1; endInput.value = state.end; }
+  stepVal.textContent = state.step;
+  state.highlighted.clear();
+  if (state.showFrog) { state.frogPos = state.start; state.hopTrail = [state.start]; renderHopTrail(); }
+  renderLine();
+  newQuizQuestion();
+}
+
+startInput.addEventListener('input', syncInputs);
+endInput.addEventListener('input', syncInputs);
+stepInput.addEventListener('input', syncInputs);
+
+// ─── Toggles ──────────────────────────────────────────────────────────────────
+function setupToggle(id, prop, cb) {
+  const btn = document.getElementById(id);
+  btn.addEventListener('click', () => {
+    state[prop] = !state[prop];
+    btn.classList.toggle('active', state[prop]);
+    cb && cb();
+    renderLine();
+  });
+}
+
+setupToggle('toggleLabels', 'showLabels');
+setupToggle('toggleMinor', 'showMinor');
+setupToggle('toggleEven', 'highlightEven');
+setupToggle('toggleOdd', 'highlightOdd');
+document.getElementById('toggleFrog').addEventListener('click', () => {
+  state.showFrog = !state.showFrog;
+  document.getElementById('toggleFrog').classList.toggle('active', state.showFrog);
+  document.getElementById('hopPanel').style.display = state.showFrog ? '' : 'none';
+  if (state.showFrog) { state.frogPos = state.start; state.hopTrail = [state.start]; renderHopTrail(); }
+  renderLine();
+});
+document.getElementById('togglePrint').addEventListener('click', () => window.print());
+
+// ─── Pixel helpers ────────────────────────────────────────────────────────────
+function getLineWidth() {
+  const wrap = document.getElementById('nlWrap');
+  // Inner usable width minus horizontal padding (40px each side)
+  return wrap.getBoundingClientRect().width - 80;
+}
+
+function valToPx(v) {
+  const { start, end } = state;
+  const w = getLineWidth();
+  return ((v - start) / (end - start)) * w;
+}
+
+// ─── Render Number Line ───────────────────────────────────────────────────────
+function renderLine() {
+  const ticks = document.getElementById('nlTicks');
+  ticks.innerHTML = '';
+
+  const { start, end, step } = state;
+  const range = end - start;
+  const lineW = getLineWidth();
+
+  // Major ticks
+  const majors = [];
+  for (let v = start; v <= end; v += step) majors.push(v);
+
+  majors.forEach(v => {
+    const px = valToPx(v);
+    const tick = mkTick(v, px, 'major');
+    ticks.appendChild(tick);
+  });
+
+  // Minor ticks (only when step > 1)
+  if (state.showMinor && step > 1) {
+    for (let v = start; v <= end; v++) {
+      if (majors.includes(v)) continue;
+      const px = valToPx(v);
+      const tick = mkTick(v, px, 'minor');
+      ticks.appendChild(tick);
+    }
+  }
+
+  // Frog
+  document.querySelector('.frog')?.remove();
+  if (state.showFrog) {
+    const frog = document.createElement('div');
+    frog.className = 'frog';
+    frog.textContent = '🐸';
+    frog.style.left = valToPx(state.frogPos) + 'px';
+    document.getElementById('nlLine').appendChild(frog);
+  }
+
+  // Arcs
+  renderArcs();
+}
+
+function mkTick(v, px, cls) {
+  const tick = document.createElement('div');
+  tick.className = 'tick ' + cls;
+  tick.style.left = px + 'px';
+  tick.dataset.val = v;
+
+  let isHL = state.highlighted.has(v) ||
+    (state.highlightEven && v % 2 === 0) ||
+    (state.highlightOdd  && v % 2 !== 0);
+  if (isHL) tick.classList.add('highlighted');
+
+  const mark = document.createElement('div');
+  mark.className = 'tick-mark';
+  tick.appendChild(mark);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'tick-label';
+  lbl.textContent = v;
+  if (!state.showLabels && cls === 'minor') lbl.style.opacity = '0';
+  if (!state.showLabels && cls === 'major') lbl.style.opacity = '0';
+  tick.appendChild(lbl);
+
+  tick.addEventListener('click', () => {
+    if (state.highlighted.has(v)) state.highlighted.delete(v);
+    else state.highlighted.add(v);
+    renderLine();
+  });
+
+  return tick;
+}
+
+// ─── Arc Trail ────────────────────────────────────────────────────────────────
+const ARC_COLORS = ['#FF6B6B','#845EC2','#00C9A7','#FF9671','#FF6F91','#FFD93D','#6BCB77'];
+
+function renderArcs() {
+  const svg = document.getElementById('arcSvg');
+  svg.innerHTML = '';
+
+  if (!state.showFrog || state.hopTrail.length < 2) return;
+
+  // The SVG origin is top-left of nlWrap. The line sits at 110px (padding-top) + half of tick-h (22px).
+  const lineY = 132; // px from top of svg
+  const padL  = 40; // left padding inside nlWrap
+
+  for (let i = 0; i < state.hopTrail.length - 1; i++) {
+    const x1 = valToPx(state.hopTrail[i])   + padL;
+    const x2 = valToPx(state.hopTrail[i+1]) + padL;
+    const cx  = (x1 + x2) / 2;
+    // Arc height: scale with hop width, min 30, max 90
+    const arcH = Math.min(90, Math.max(30, Math.abs(x2 - x1) * 0.55));
+    const cy  = lineY - arcH;
+    const color = ARC_COLORS[i % ARC_COLORS.length];
+
+    // Curved arc path (quadratic bezier)
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${lineY} Q ${cx} ${cy} ${x2} ${lineY}`);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '3.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-dasharray', '0');
+    path.style.opacity = '0.85';
+    svg.appendChild(path);
+
+    // Arrowhead at landing end
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    arrow.setAttribute('points', `${x2-6},${lineY-10} ${x2+6},${lineY-10} ${x2},${lineY}`);
+    arrow.setAttribute('fill', color);
+    arrow.style.opacity = '0.9';
+    svg.appendChild(arrow);
+
+    // Hop number label mid-arc
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', cx);
+    label.setAttribute('y', cy - 6);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('font-family', 'Fredoka One, cursive');
+    label.setAttribute('font-size', '15');
+    label.setAttribute('fill', color);
+    label.textContent = '+' + (state.hopTrail[i+1] - state.hopTrail[i]);
+    svg.appendChild(label);
+  }
+
+  // Size SVG to cover lineY + a bit below
+  svg.setAttribute('height', lineY + 20);
+  svg.style.top = '0';
+  svg.style.height = (lineY + 20) + 'px';
+}
+
+// ─── Hop ──────────────────────────────────────────────────────────────────────
+function doHop() {
+  if (!state.showFrog) return;
+  const hopSize = parseInt(document.getElementById('hopSize').value) || 1;
+  const next = state.frogPos + hopSize;
+  if (next > state.end) {
+    showHopMsg('🛑 Too far! Frog fell off the line!');
+    return;
+  }
+  state.frogPos = next;
+  state.hopTrail.push(next);
+  renderLine();
+  renderHopTrail();
+}
+
+function resetHop() {
+  state.frogPos = parseInt(document.getElementById('hopStart').value);
+  if (isNaN(state.frogPos) || state.frogPos < state.start || state.frogPos > state.end) {
+    state.frogPos = state.start;
+  }
+  state.hopTrail = [state.frogPos];
+  renderLine();
+  renderHopTrail();
+}
+
+function renderHopTrail() {
+  const el = document.getElementById('hopTrail');
+  if (state.hopTrail.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '<span style="background:#aaa;margin-right:2px">Path:</span> ' +
+    state.hopTrail.map(n => `<span>${n}</span>`).join(' ➡️ ');
+}
+
+function showHopMsg(msg) {
+  const el = document.getElementById('hopTrail');
+  el.innerHTML = `<span style="background:var(--coral)">${msg}</span>`;
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+function newQuizQuestion() {
+  const { start, end, step } = state;
+  const majors = [];
+  for (let v = start; v <= end; v += step) majors.push(v);
+  if (majors.length < 3) {
+    document.getElementById('quizQ').textContent = 'Add more numbers to get quiz questions!';
+    return;
+  }
+
+  const types = ['before', 'after', 'between', 'count'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+  let qText, answer;
+
+  if (type === 'before') {
+    const idx = ri(1, majors.length - 1);
+    answer = majors[idx - 1];
+    qText = `What number comes just BEFORE ${majors[idx]} on the number line?`;
+  } else if (type === 'after') {
+    const idx = ri(0, majors.length - 2);
+    answer = majors[idx + 1];
+    qText = `What number comes just AFTER ${majors[idx]} on the number line?`;
+  } else if (type === 'between') {
+    const idx = ri(1, majors.length - 2);
+    answer = majors[idx];
+    qText = `What number is between ${majors[idx-1]} and ${majors[idx+1]}?`;
+  } else {
+    const idx1 = ri(0, majors.length - 3);
+    const idx2 = ri(idx1 + 1, majors.length - 1);
+    answer = idx2 - idx1;
+    qText = `How many hops of ${step} from ${majors[idx1]} to ${majors[idx2]}?`;
+  }
+
+  quiz.q = qText;
+  quiz.answer = answer;
+  document.getElementById('quizQ').textContent = qText;
+  document.getElementById('quizResult').textContent = '';
+  document.getElementById('quizResult').className = 'quiz-result';
+  document.getElementById('quizInput').value = '';
+  document.getElementById('nextBtn').classList.remove('show');
+}
+
+function checkAnswer() {
+  const val = parseInt(document.getElementById('quizInput').value);
+  const res = document.getElementById('quizResult');
+  quiz.total++;
+  if (val === quiz.answer) {
+    quiz.score++;
+    res.textContent = '🎉 Correct! Great job!';
+    res.className = 'quiz-result correct';
+  } else {
+    res.textContent = `❌ Not quite! The answer is ${quiz.answer}. Try again next time!`;
+    res.className = 'quiz-result wrong';
+  }
+  document.getElementById('scoreBadge').textContent = `⭐ ${quiz.score} / ${quiz.total}`;
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function nextQuestion() { newQuizQuestion(); }
+
+document.getElementById('quizInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+
+// ─── Resize ───────────────────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderLine, 80);
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderLine();
+newQuizQuestion();
+document.getElementById('hopStart').value = state.start;
+</script>
+</body>
+</html>
